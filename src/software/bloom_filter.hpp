@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hash.hpp"
 #include <bitset>
 #include <cstddef>
 #include <string>
@@ -13,14 +14,14 @@ template <std::size_t size, std::size_t num_hashes> struct BloomFilter {
 
   void insert(const std::string &key) {
     for (std::size_t i = 0; i < num_hashes; ++i) {
-      std::size_t index = 0 & mask; /* TODO: hash */
+      std::size_t index = hash(key, i) & mask; /* TODO: hash */
       filter.set(index);
     }
   }
 
   bool query(const std::string &key) {
     for (std::size_t i = 0; i < num_hashes; ++i) {
-      std::size_t index = 0 & mask; /* TODO: hash */
+      std::size_t index = hash(key, i) & mask; /* TODO: hash */
       if (!filter.test(index))
         return false;
     }
