@@ -43,3 +43,7 @@ build
 
 # debug information files
 *.dwo
+
+# python
+.venv
+__pycache__
