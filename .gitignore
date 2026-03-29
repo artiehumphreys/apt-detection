@@ -1,3 +1,7 @@
+.cache/*
+build
+*.swp
+*.DS_Store
 # Prerequisites
 *.d
 
