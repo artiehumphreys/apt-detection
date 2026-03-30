@@ -11,6 +11,7 @@ compile_commands.json
 *.o
 *.dSYM/
 *.out
+*.bmp
 
 # Editors
 .vscode/
