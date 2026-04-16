@@ -2,115 +2,79 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 
-def generate_ids_pipeline(num_noise=10):
-    # 1. MASTER ATTACK GRAPH (Threat Model)
-    # This defines all potential malicious activity.
-    master_graph = nx.DiGraph()
-    master_graph.add_edges_from([
-        ("root", "shell"),
-        ("shell", "firefox"),
-        ("shell", "curl"),
-        ("firefox", "malware.py"),
-        ("curl", "payload.sh"),
-        ("malware.py", "exfil_data"),
-        ("payload.sh", "exfil_data")
+def generate_ids_data(num_noise=12):
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ("init", "svchost"), ("svchost", "shell"), ("shell", "firefox"),
+        ("shell", "curl"), ("firefox", "malware.py"), ("curl", "payload.sh"),
+        ("malware.py", "exfil"), ("payload.sh", "exfil")
     ])
 
-    # 2. INSTANTIATED ATTACK TREE (Selected Scenario)
-    # We choose one specific path to simulate.
-    # Scenario: shell -> curl -> payload.sh -> exfil_data
-    attack_path = ["root", "shell", "curl", "payload.sh", "exfil_data"]
+    # 2. SUBGRAPH MINING (Extracting an Attack Tree)
+    # We mine a path starting from 'init' to a leaf node to form a 'Tree' scenario
+    start_node = "init"
+    current = start_node
+    mined_path = [current]
     
-    # Flatten the tree into raw Logs (pid, ppid, is_target) for PIM
+    while list(graph.successors(current)):
+        current = random.choice(list(graph.successors(current)))
+        mined_path.append(current)
+    
     logs = []
     pid_map = {}
     next_pid = 100
     
-    current_ppid = 1 # Init
-    for process_name in attack_path:
+    current_ppid = 1
+    for process_name in mined_path:
         pid = next_pid
         pid_map[pid] = process_name
-        logs.append((pid, current_ppid, True))
+        
+        is_target = (process_name == "shell")
+        
+        logs.append((pid, current_ppid, is_target))
         current_ppid = pid
         next_pid += 1
 
-    # 3. ADDING NOISE (Benign system activity)
-    noise_names = ["ls", "grep", "chrome", "svchost", "python", "git"]
+    noise_names = ["ls", "grep", "chrome", "git", "vim", "python"]
     for i in range(num_noise):
         pid = next_pid
-        # Noise can spawn from init (1) or randomly from other nodes
-        ppid = random.choice([1, 100, 101]) 
+        ppid = random.choice([1, 100, 101])
         pid_map[pid] = random.choice(noise_names)
         logs.append((pid, ppid, False))
         next_pid += 1
 
-    return master_graph, logs, pid_map
+    return graph, logs, pid_map
 
-def plot_attack_graph(master_graph, filename="data/attack_graph.png"):
-    plt.figure(figsize=(10, 8))
-    pos = nx.spring_layout(master_graph, k=1.0) # Larger k for more spacing
+def plot_separate(graph, logs, pid_map):
+    # Plot 1: The Template Graph
+    plt.figure(figsize=(8, 6))
+    nx.draw(graph, with_labels=True, node_color='lightgray', node_size=2000, arrowsize=20)
+    plt.title("Master Attack Graph")
+    plt.savefig("data/attack_graph.png")
     
-    nx.draw(master_graph, pos, 
-            with_labels=True, 
-            node_color='#d1d1d1', # Light gray
-            node_size=3000, 
-            font_size=11, 
-            font_weight='bold',
-            arrowsize=25, 
-            edge_color='#999999') # Medium gray
-
-    plt.title("1. Master Attack Graph (Threat Model)", fontsize=16)
-    plt.tight_layout()
-    plt.axis('off')
-    plt.savefig(filename, dpi=300) # Save high-res
-    print(f"[Vizu] Saved Attack Graph to {filename}")
-    # plt.show() # Uncomment if you want to see it pop up
-
-def plot_attack_tree(logs, pid_map, filename="data/attack_tree.png"):
+    plt.figure(figsize=(10, 8))
     G_logs = nx.DiGraph()
-    colors = []
-    labels = {}
-    for pid, ppid, target in logs:
+    for pid, ppid, t in logs: 
         G_logs.add_edge(ppid, pid)
     
+    colors = []
+    labels = {}
     for node in G_logs:
-        # Check if any part of this component is malicious
-        is_malicious = any(p == node and t for p, pp, t in logs)
-        # Red if malicious path, skyblue if benign noise
-        colors.append('#ff4d4d' if is_malicious else '#add8e6') 
+        is_target = any(pid == node and t for pid, ppid, t in logs)
+        colors.append('#ff4d4d' if is_target else '#add8e6')
         name = pid_map.get(node, "init")
         labels[node] = f"{name}\n[{node}]"
 
-    plt.figure(figsize=(12, 9))
-    # Shell layout often looks better for process trees
-    pos = nx.shell_layout(G_logs) 
-    
-    nx.draw(G_logs, pos, 
-            labels=labels, 
-            with_labels=True, 
-            node_color=colors, 
-            node_size=2800, 
-            font_size=8, 
-            font_weight='bold',
-            arrowsize=20, 
-            edge_color='#bbbbbb') # Light gray
+    pos = nx.shell_layout(G_logs)
+    nx.draw(G_logs, pos, labels=labels, with_labels=True, node_color=colors, node_size=2500)
+    plt.title("Mined Attack Tree (Red = Suspicious Shell)")
+    plt.savefig("data/attack_tree.png")
+    print("Plots saved as attack_graph.png and attack_tree.png")
 
-    plt.title("2. Mined Attack Tree Instance (from Logs)", fontsize=16)
-    plt.tight_layout()
-    plt.axis('off')
-    plt.savefig(filename, dpi=300) # Save high-res
-    print(f"[Vizu] Saved Attack Tree to {filename}")
-    # plt.show() # Uncomment if you want to see it pop up
+graph, logs, pid_map = generate_ids_data()
 
-# --- RUN THE PIPELINE ---
-master, logs, pid_map = generate_ids_pipeline()
-
-# Output the logs to a file for PIM simulator
 with open("data/process_stream.log", "w") as f:
     for pid, ppid, target in sorted(logs):
         f.write(f"{pid},{ppid},{1 if target else 0}\n")
-print(f"[Log] Generated {len(logs)} log entries in data/process_stream.log")
 
-# Generate the separate plots
-plot_attack_graph(master)
-plot_attack_tree(logs, pid_map)
+plot_separate(graph, logs, pid_map)
