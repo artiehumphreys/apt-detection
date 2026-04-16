@@ -10,8 +10,7 @@ def generate_ids_data(num_noise=12):
         ("malware.py", "exfil"), ("payload.sh", "exfil")
     ])
 
-    # 2. SUBGRAPH MINING (Extracting an Attack Tree)
-    # We mine a path starting from 'init' to a leaf node to form a 'Tree' scenario
+    # 2. subgraph mining TODO: ensure this algorithm is correct and ask if it should produce multiple attack trees 
     start_node = "init"
     current = start_node
     mined_path = [current]
@@ -46,7 +45,6 @@ def generate_ids_data(num_noise=12):
     return graph, logs, pid_map
 
 def plot_separate(graph, logs, pid_map):
-    # Plot 1: The Template Graph
     plt.figure(figsize=(8, 6))
     nx.draw(graph, with_labels=True, node_color='lightgray', node_size=2000, arrowsize=20)
     plt.title("Master Attack Graph")
