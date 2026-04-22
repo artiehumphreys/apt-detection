@@ -1,78 +1,103 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import random
+import pygraphviz
 
-def generate_ids_data(num_noise=12):
-    graph = nx.DiGraph()
-    graph.add_edges_from([
-        ("init", "svchost"), ("svchost", "shell"), ("shell", "firefox"),
-        ("shell", "curl"), ("firefox", "malware.py"), ("curl", "payload.sh"),
-        ("malware.py", "exfil"), ("payload.sh", "exfil")
-    ])
+def generate_ids_research_pipeline():
+    master = nx.DiGraph()
+    core_edges = [
+        ("svchost.exe", "firefox.exe"), ("cmd.exe", "firefox.exe"), 
+        ("firefox.exe", "*.exe"), ("*.exe", "pswd.txt"), 
+        ("svchost.exe", "*.250"), ("firefox.exe", "malware.py")
+    ]
+    master.add_edges_from(core_edges)
 
-    # 2. subgraph mining TODO: ensure this algorithm is correct and ask if it should produce multiple attack trees 
-    start_node = "init"
-    current = start_node
-    mined_path = [current]
-    
-    while list(graph.successors(current)):
-        current = random.choice(list(graph.successors(current)))
-        mined_path.append(current)
-    
-    logs = []
-    pid_map = {}
+    global_pid_map = {}
     next_pid = 100
-    
-    current_ppid = 1
-    for process_name in mined_path:
-        pid = next_pid
-        pid_map[pid] = process_name
-        
-        is_target = (process_name == "shell")
-        
-        logs.append((pid, current_ppid, is_target))
-        current_ppid = pid
+    for node in sorted(master.nodes()):
+        global_pid_map[node] = next_pid
         next_pid += 1
-
-    noise_names = ["ls", "grep", "chrome", "git", "vim", "python"]
-    for i in range(num_noise):
-        pid = next_pid
-        ppid = random.choice([1, 100, 101])
-        pid_map[pid] = random.choice(noise_names)
-        logs.append((pid, ppid, False))
-        next_pid += 1
-
-    return graph, logs, pid_map
-
-def plot_separate(graph, logs, pid_map):
-    plt.figure(figsize=(8, 6))
-    nx.draw(graph, with_labels=True, node_color='lightgray', node_size=2000, arrowsize=20)
-    plt.title("Master Attack Graph")
-    plt.savefig("data/attack_graph.png")
     
-    plt.figure(figsize=(10, 8))
-    G_logs = nx.DiGraph()
-    for pid, ppid, t in logs: 
-        G_logs.add_edge(ppid, pid)
+    inv_pid_map = {v: k for k, v in global_pid_map.items()}
+
+    mined_graph = nx.DiGraph()
+    parents = [n for n, d in master.out_degree() if d > 0]
+
+    for parent in parents:
+        parent_pid = global_pid_map[parent]
+        for child_name in master.successors(parent):
+            child_pid = global_pid_map[child_name]
+            mined_graph.add_edge(parent_pid, child_pid)
+
+    target_names = ["malware.py", "pswd.txt"]
+
+    logs = []
+    for ppid, pid in mined_graph.edges():
+        proc_name = inv_pid_map[pid]
+        is_seed = 1 if proc_name in target_names else 0
+        logs.append((pid, ppid, is_seed))
     
-    colors = []
-    labels = {}
-    for node in G_logs:
-        is_target = any(pid == node and t for pid, ppid, t in logs)
-        colors.append('#ff4d4d' if is_target else '#add8e6')
-        name = pid_map.get(node, "init")
-        labels[node] = f"{name}\n[{node}]"
+    logs.sort()
+    with open("data/process_stream.log", "w") as f:
+        for pid, ppid, s in logs:
+            f.write(f"{pid} {ppid} {s}\n")
 
-    pos = nx.shell_layout(G_logs)
-    nx.draw(G_logs, pos, labels=labels, with_labels=True, node_color=colors, node_size=2500)
-    plt.title("Mined Attack Tree (Red = Suspicious Shell)")
-    plt.savefig("data/attack_tree.png")
-    print("Plots saved as attack_graph.png and attack_tree.png")
+    return master, mined_graph, global_pid_map, inv_pid_map, target_names
 
-graph, logs, pid_map = generate_ids_data()
+def save_plots(master, mined_graph, global_pid_map, inv_pid_map, target_names):
 
-with open("data/process_stream.log", "w") as f:
-    for pid, ppid, target in sorted(logs):
-        f.write(f"{pid} {ppid} {1 if target else 0}\n")
+    def get_node_style(name):
+        if name in target_names:
+            return '#67bc36', 's'  # Green Rectangle
+        elif name == "*.250":
+            return '#03bfc1', 'd'  # Teal Diamond
+        else:
+            return '#ff914d', 'o'  # Orange Circle
 
-plot_separate(graph, logs, pid_map)
+    def draw_styled_graph(G, pid_lookup, ax=None, is_master=False):
+        pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
+
+        labels = {}
+        for node in G.nodes():
+            name = node if is_master else pid_lookup[node]
+            pid = pid_lookup[node] if is_master else node
+            
+            color, shape = get_node_style(name)
+            labels[node] = f"{name}\nPID: {pid}"
+            
+            nx.draw_networkx_nodes(G, pos, ax=ax, nodelist=[node], 
+                                   node_color=color, node_shape=shape, 
+                                   node_size=7500, edgecolors='black', linewidths=1.5)
+        
+        nx.draw_networkx_labels(G, pos, ax=ax, labels=labels, 
+                                font_size=10, font_weight='bold')
+        nx.draw_networkx_edges(G, pos, ax=ax, node_size=9000, arrowsize=30, width=2, edge_color='#444444', min_target_margin=12)
+
+    plt.figure(figsize=(12, 10))
+    draw_styled_graph(master, global_pid_map, is_master=True)
+    plt.title("Master Attack Graph (Global PID Reference)", fontsize=18, fontweight='bold')
+    plt.axis('off')
+    plt.savefig("data/attack_graph.png", dpi=300, bbox_inches='tight')
+    plt.close()
+
+    parents = [n for n, d in master.out_degree() if d > 0]
+    fig, axes = plt.subplots(1, len(parents), figsize=(32, 12))
+
+    for i, parent_name in enumerate(parents):
+        parent_pid = global_pid_map[parent_name]
+        star_nodes = [parent_pid] + [global_pid_map[c] for c in master.successors(parent_name)]
+        subtree = mined_graph.subgraph(star_nodes)
+        
+        ax = axes[i]
+        draw_styled_graph(subtree, inv_pid_map, ax=ax, is_master=False)
+        ax.set_title(f"Subtree {i+1}: {parent_name} Star", fontsize=16, fontweight='bold')
+        ax.axis('off')
+
+    plt.suptitle("Parallel Mined Subtrees (Consistent Global PIDs)", fontsize=24, fontweight='bold', y=0.98)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig("data/attack_trees.png", dpi=300, bbox_inches='tight')
+    plt.close()
+
+if __name__ == "__main__":
+    m, mg, gpm, ipm, tn = generate_ids_research_pipeline()
+    save_plots(m, mg, gpm, ipm, tn)
+    print("Saved plots and log.")
