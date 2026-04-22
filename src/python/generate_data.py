@@ -73,6 +73,6 @@ graph, logs, pid_map = generate_ids_data()
 
 with open("data/process_stream.log", "w") as f:
     for pid, ppid, target in sorted(logs):
-        f.write(f"{pid},{ppid},{1 if target else 0}\n")
+        f.write(f"{pid} {ppid} {1 if target else 0}\n")
 
 plot_separate(graph, logs, pid_map)
