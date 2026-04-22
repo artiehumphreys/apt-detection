@@ -21,25 +21,24 @@ def generate_ids_research_pipeline():
 
     mined_graph = nx.DiGraph()
     parents = [n for n, d in master.out_degree() if d > 0]
-
-    for parent in parents:
-        parent_pid = global_pid_map[parent]
-        for child_name in master.successors(parent):
-            child_pid = global_pid_map[child_name]
-            mined_graph.add_edge(parent_pid, child_pid)
-
     target_names = ["malware.py", "pswd.txt"]
 
-    logs = []
-    for ppid, pid in mined_graph.edges():
-        proc_name = inv_pid_map[pid]
-        is_seed = 1 if proc_name in target_names else 0
-        logs.append((pid, ppid, is_seed))
-    
-    logs.sort()
-    with open("data/process_stream.log", "w") as f:
-        for pid, ppid, s in logs:
-            f.write(f"{pid} {ppid} {s}\n")
+    for i, parent_name in enumerate(parents):
+        parent_pid = global_pid_map[parent_name]
+        subtree_logs = []
+        
+        for child_name in master.successors(parent_name):
+            child_pid = global_pid_map[child_name]
+            mined_graph.add_edge(parent_pid, child_pid)
+            
+            is_seed = 1 if child_name in target_names else 0
+            subtree_logs.append((child_pid, parent_pid, is_seed))
+        
+        filename = f"data/subtree_{i+1}_{parent_name}.log"
+        with open(filename, "w") as f:
+            for pid, ppid, s in sorted(subtree_logs):
+                f.write(f"{pid} {ppid} {s}\n")
+        print(f"Generated: {filename}")
 
     return master, mined_graph, global_pid_map, inv_pid_map, target_names
 
@@ -74,7 +73,7 @@ def save_plots(master, mined_graph, global_pid_map, inv_pid_map, target_names):
 
     plt.figure(figsize=(12, 10))
     draw_styled_graph(master, global_pid_map, is_master=True)
-    plt.title("Master Attack Graph (Global PID Reference)", fontsize=18, fontweight='bold')
+    plt.title("Attack Graph", fontsize=18, fontweight='bold')
     plt.axis('off')
     plt.savefig("data/attack_graph.png", dpi=300, bbox_inches='tight')
     plt.close()
@@ -92,7 +91,7 @@ def save_plots(master, mined_graph, global_pid_map, inv_pid_map, target_names):
         ax.set_title(f"Subtree {i+1}: {parent_name} Star", fontsize=16, fontweight='bold')
         ax.axis('off')
 
-    plt.suptitle("Parallel Mined Subtrees (Consistent Global PIDs)", fontsize=24, fontweight='bold', y=0.98)
+    plt.suptitle("Mined Attack Trees", fontsize=24, fontweight='bold', y=0.98)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig("data/attack_trees.png", dpi=300, bbox_inches='tight')
     plt.close()
