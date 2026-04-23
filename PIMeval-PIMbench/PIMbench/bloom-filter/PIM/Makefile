@@ -2,12 +2,15 @@ PROJ_ROOT = ../../..
 include ${PROJ_ROOT}/Makefile.common
 
 EXEC := bloom.out
-SRC := bloom.cpp
+EXEC_DETECT := detect.out
 
-debug perf dramsim3_integ: $(EXEC)
+debug perf dramsim3_integ: $(EXEC) $(EXEC_DETECT)
 
-$(EXEC): $(SRC) $(DEPS)
+$(EXEC): bloom.cpp $(DEPS)
+	$(CXX) $< $(CXXFLAGS) -o $@
+
+$(EXEC_DETECT): detect.cpp $(DEPS)
 	$(CXX) $< $(CXXFLAGS) -o $@
 
 clean:
-	rm -rf $(EXEC) *.dSYM
+	rm -rf $(EXEC) $(EXEC_DETECT) *.dSYM
