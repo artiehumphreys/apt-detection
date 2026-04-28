@@ -47,3 +47,5 @@ build
 # python
 .venv
 __pycache__
+
+larger_subtree_2_firefox.exe.log
