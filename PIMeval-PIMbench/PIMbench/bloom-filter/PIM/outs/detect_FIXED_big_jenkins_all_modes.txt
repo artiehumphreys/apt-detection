@@ -1,0 +1,135 @@
+============================================================
+RUN variant=cpu hash=jenkins m=1024 k=3 seed=none
+============================================================
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: cpu
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605428
+filters spawned: 4
+
+============================================================
+RUN variant=pim-v2 hash=jenkins m=1024 k=3 seed=none
+============================================================
+============================================================
+RUN variant=cpu-counting hash=jenkins m=1024 k=3 seed=none
+============================================================
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: cpu-counting
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605428
+filters spawned: 4
+
+============================================================
+RUN variant=pim-counting-v2 hash=jenkins m=1024 k=3 seed=none
+============================================================
+----------------------------------------
+PIM-Config: Debug Flags = 0x0
+PIM-Config: Simulator Config File: <NONE>
+PIM-Config: Memory Config File: <DEFAULT>
+PIM-Config: Memory Protocol: DDR
+PIM-Config: Current Device = PIM_DEVICE_BANK_LEVEL, Simulation Target = PIM_DEVICE_BANK_LEVEL
+PIM-Config: #ranks = 4, #banksPerRank = 128, #subarraysPerBank = 32, #rowsPerSubarray = 1024, #colsPerSubarray = 8192
+PIM-Config: Number of Threads = 40
+PIM-Config: Load Balanced = 1
+----------------------------------------
+PIM-Info: Aggregate all subarrays within a bank as a single core
+PIM-Info: Created performance energy model for bank-level PIM
+PIM-Info: Created PIM device with 512 cores of 32768 rows and 8192 columns.
+PIM-Info: Created thread pool with 39 threads.
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: pim-v2
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605429
+filters spawned: 5
+
+============================================================
+RUN variant=cpu-counting hash=jenkins m=1024 k=3 seed=0
+============================================================
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: cpu-counting
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605429
+filters spawned: 5
+
+============================================================
+RUN variant=pim-counting-v2 hash=jenkins m=1024 k=3 seed=0
+============================================================
+----------------------------------------
+PIM-Config: Debug Flags = 0x0
+PIM-Config: Simulator Config File: <NONE>
+PIM-Config: Memory Config File: <DEFAULT>
+PIM-Config: Memory Protocol: DDR
+PIM-Config: Current Device = PIM_DEVICE_BANK_LEVEL, Simulation Target = PIM_DEVICE_BANK_LEVEL
+PIM-Config: #ranks = 4, #banksPerRank = 128, #subarraysPerBank = 32, #rowsPerSubarray = 1024, #colsPerSubarray = 8192
+PIM-Config: Number of Threads = 40
+PIM-Config: Load Balanced = 1
+----------------------------------------
+PIM-Info: Aggregate all subarrays within a bank as a single core
+PIM-Info: Created performance energy model for bank-level PIM
+PIM-Info: Created PIM device with 512 cores of 32768 rows and 8192 columns.
+PIM-Info: Created thread pool with 39 threads.
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: pim-v2
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605428
+filters spawned: 4
+
+============================================================
+RUN variant=cpu-counting hash=jenkins m=1024 k=3 seed=none
+============================================================
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: cpu-counting
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605428
+filters spawned: 4
+
+============================================================
+RUN variant=pim-counting-v2 hash=jenkins m=1024 k=3 seed=none
+============================================================
+----------------------------------------
+PIM-Config: Debug Flags = 0x0
+PIM-Config: Simulator Config File: <NONE>
+PIM-Config: Memory Config File: <DEFAULT>
+PIM-Config: Memory Protocol: DDR
+PIM-Config: Current Device = PIM_DEVICE_BANK_LEVEL, Simulation Target = PIM_DEVICE_BANK_LEVEL
+PIM-Config: #ranks = 4, #banksPerRank = 128, #subarraysPerBank = 32, #rowsPerSubarray = 1024, #colsPerSubarray = 8192
+PIM-Config: Number of Threads = 40
+PIM-Config: Load Balanced = 1
+----------------------------------------
+PIM-Info: Aggregate all subarrays within a bank as a single core
+PIM-Info: Created performance energy model for bank-level PIM
+PIM-Info: Created PIM device with 512 cores of 32768 rows and 8192 columns.
+PIM-Info: Created thread pool with 39 threads.
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: pim-counting-v2
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605428
+filters spawned: 4
