@@ -133,3 +133,20 @@ events processed: 1605425
 alerts fired: 2
 pids inserted: 1605428
 filters spawned: 4
+
+============================================================
+RUN variant=cuckoo-cpu hash=jenkins m=1024 k=3 seed=none
+============================================================
+ALERT 1000104 1000103
+ALERT 1000105 101
+
+variant: cuckoo-cpu
+hash_scheme: jenkins
+events processed: 1605425
+alerts fired: 2
+pids inserted: 1605428
+filters spawned: 4
+
+============================================================
+RUN variant=cuckoo-pim-v2 hash=jenkins m=1024 k=3 seed=none
+============================================================

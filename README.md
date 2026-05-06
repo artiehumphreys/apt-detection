@@ -45,7 +45,7 @@ cd apt-detection/PIMeval-PIMbench/PIMbench/bloom-filter
 Build from the Bloom filter folder:
 
 ```bash
-module load gcc/14.2.0
+module load gcc/14.2.0 # if on rivanna or CS server
 make clean
 make perf
 ```
@@ -79,9 +79,9 @@ Supported variants:
 
 ```text
 cpu
-pim-v2
-pim-v3
-pim-v4
+pim-v2 # these are the default bloom filters
+pim-v3 # these are the default bloom filters
+pim-v4 # these are the default bloom filters
 cpu-counting
 pim-counting-v2
 pim-counting-v3

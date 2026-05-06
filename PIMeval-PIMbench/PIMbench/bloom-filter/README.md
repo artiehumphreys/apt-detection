@@ -19,4 +19,4 @@ cd visuals
 python3 plot.py
 ```
 
-output pngs are written to `visuals/`.
+output pngs are written to `visuals/`
