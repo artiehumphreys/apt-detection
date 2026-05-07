@@ -1,0 +1,34 @@
+# Makefile common settings for sub-modules
+# Copyright (c) 2024 University of Virginia
+# This file is licensed under the MIT License.
+# See the LICENSE file in the root of this repository for more details.
+
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall
+
+# Setup libpimeval library
+PROJ_ROOT ?= .
+LIBPIMEVAL_PATH ?= $(PROJ_ROOT)/libpimeval
+INC_DIR := $(LIBPIMEVAL_PATH)/include
+LIB_DIR := $(LIBPIMEVAL_PATH)/lib
+UTIL_DIR := $(PROJ_ROOT)/util
+CXXFLAGS += -I$(INC_DIR) -I$(UTIL_DIR) -L$(LIB_DIR) -lpimeval
+DEPS := $(INC_DIR)/libpimeval.h $(LIB_DIR)/libpimeval.a
+
+.PHONY: debug perf dramsim3_integ clean
+.DEFAULT_GOAL := perf
+
+# Setup build targets
+ifeq ($(MAKECMDGOALS),)
+	MAKECMDGOALS := $(.DEFAULT_GOAL)
+endif
+ifeq ($(MAKECMDGOALS),debug)
+	CXXFLAGS += -g
+endif
+ifeq ($(MAKECMDGOALS),perf)
+	CXXFLAGS += -O3 -Wno-unknown-pragmas
+endif
+ifeq ($(MAKECMDGOALS),dramsim3_integ)
+	CXXFLAGS += -O3 -DDRAMSIM3_INTEG
+endif
+

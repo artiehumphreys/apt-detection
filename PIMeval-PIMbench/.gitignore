@@ -1,0 +1,18 @@
+# Project files
+libpimeval/build/
+libpimeval/lib/
+result-local.txt
+
+# LSP
+compile_commands.json
+.cache
+
+# C++ object files
+*.o
+*.dSYM/
+*.out
+*.bmp
+
+# Editors
+.vscode/
+
