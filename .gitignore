@@ -48,4 +48,5 @@ build
 .venv
 __pycache__
 
+big_log.txt
 PIMeval-PIMbench/PIMbench/bloom-filter/reports/*
