@@ -29,7 +29,8 @@ python3 cuckoo_filter.py
 Generate the sample attack graph, attack tree, and process stream:
 
 ```bash
-python3 generate_attack_graph.py
+python3 generate_data.py
+python3 generate_larger_data.py
 ```
 
 Outputs are written under `src/python/data/`.
